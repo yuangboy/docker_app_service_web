@@ -1,0 +1,40 @@
+Ton **Nginx** joue un rôle central dans ton architecture frontend–backend. Il n’est pas juste un serveur web, mais un **reverse proxy** qui apporte plusieurs bénéfices à ton application :
+
+---
+
+## 🌐 Rôle de Nginx dans ton frontend
+- **Point d’entrée unique** : toutes les requêtes HTTP arrivent sur `http://localhost:80` et Nginx les redirige vers ton conteneur **frontend** (Next.js sur port 3000).  
+- **Optimisation des performances** : il gère la compression Gzip, le cache des fichiers statiques (CSS, JS, images), ce qui accélère le rendu côté navigateur.  
+- **Sécurité** : il ajoute des headers de protection (X-Frame-Options, X-Content-Type-Options, etc.) pour limiter les attaques XSS ou le clickjacking.  
+- **Simplification** : l’utilisateur n’a pas besoin de connaître le port interne du frontend (`3000`), il accède simplement à `http://localhost`.
+
+---
+
+## ⚙️ Rôle de Nginx dans ton backend
+- **Routage des API** : toutes les requêtes vers `/api/...` sont envoyées au conteneur **backend** (NestJS sur port 3001).  
+- **Réécriture d’URL** : Nginx supprime le préfixe `/api/` avant de transmettre la requête au backend, ce qui simplifie la logique côté serveur.  
+- **Gestion des CORS** : il ajoute des en‑têtes pour permettre aux applications frontend d’appeler l’API sans blocage par le navigateur.  
+- **Unification** : ton backend est accessible via le même domaine et port que ton frontend, ce qui évite les problèmes de cross-domain.
+
+---
+
+## 🔒 Apports transversaux
+- **Sécurité** : Nginx agit comme une barrière entre Internet et tes conteneurs, filtrant les requêtes et masquant les détails internes.  
+- **Scalabilité** : grâce aux upstreams et au load balancing (`least_conn`), tu pourrais facilement ajouter plusieurs instances de frontend ou backend.  
+- **Observabilité** : il centralise les logs d’accès et d’erreurs, ce qui simplifie le monitoring.  
+- **Health check** : l’endpoint `/health` permet de vérifier rapidement si le proxy est opérationnel.
+
+---
+
+## 🎯 En résumé
+Nginx est le **chef d’orchestre** de ton application :
+- Il **unifie** l’accès au frontend et au backend via un seul port (80).  
+- Il **optimise** les performances (cache, compression).  
+- Il **sécurise** les échanges (headers, contrôle des requêtes).  
+- Il **simplifie** la configuration côté client (un seul domaine, pas besoin de connaître les ports internes).  
+
+Sans Nginx, tu devrais exposer séparément ton frontend sur `:3000` et ton backend sur `:3001`, ce qui compliquerait l’accès et la sécurité.
+
+---
+
+👉 Veux‑tu que je te montre un **diagramme comparatif** entre une architecture **avec Nginx** et **sans Nginx**, pour visualiser la différence (architecture avec vs sans Nginx) ?
