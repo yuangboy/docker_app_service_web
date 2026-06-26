@@ -9,7 +9,10 @@
     "lint": "eslint '**/*.{js,ts,jsx,tsx}' --fix",
     "type-check": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "test:ci": "jest --ci --coverage --maxWorkers=4"
+    "test:ci": "jest --ci --coverage --maxWorkers=4",
+    "build:static": "EXPORT=true next build",  
+    "export": "next export",                  
+    "build:gh-pages": "npm run build:static && npm run export"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
