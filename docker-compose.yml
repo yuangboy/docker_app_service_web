@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   # Frontend NextJS
@@ -18,8 +18,15 @@ services:
     networks:
       - app-network
     volumes:
+      # - ./frontend/src:/app/src          # Monte uniquement src
+      # - ./frontend/public:/app/public    # Monte public
+      # - ./frontend/app:/app/app          # Monte app
+      # - ./frontend/package.json:/app/package.json
+      # - ./frontend/package-lock.json:/app/package-lock.json
+      - /app/node_modules                # ← IMPORTANT : Préserve node_modules
+      # - /app/.next                       # ← IMPORTANT : Préserve .next   
       - ./frontend:/app          # Gardez ce volume pour le développement
-      - /app/node_modules        # 👈 Ajoutez cette ligne ! Évite d'écraser node_module
+    # command: npm run dev            # ← AJOUTEZ CETTE LIGNE ! Préserve .next
     depends_on:
       - backend
     logging:
@@ -36,6 +43,7 @@ services:
       
 
   # Backend NestJS
+  # Backend NestJS
   backend:
     build:
       context: ./backend
@@ -44,13 +52,14 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
+    env_file:
+      - .env
     environment:
-      # - NODE_ENV=production
-      - NODE_ENV=development    # Changé
+      - NODE_ENV=development
       - PORT=3001
-      - DATABASE_URL=${DATABASE_URL:-postgresql://user:password@postgres:5432/app}
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/app}
-      - MONGODB_DB=${MONGODB_DB:-app}
+      # - MONGODB_URI=mongodb://mongodb:27017/app
+      - MONGODB_URI=mongodb://albin:Albin%401234@mongodb:27017/appdb 
+      - MONGODB_DB=appdb
       - JWT_SECRET=${JWT_SECRET:-supersecretkey}
       - CORS_ORIGIN=http://localhost
       - TZ=UTC
@@ -59,17 +68,18 @@ services:
     networks:
       - app-network
     volumes:
-      - ./backend:/app
-    
-   
-   
+      # Pour le développement avec hot-reload
+      # - ./backend/src:/app/src
+      # - ./backend/package.json:/app/package.json
+      # - ./backend/package-lock.json:/app/package-lock.json
+      # - ./backend/tsconfig.json:/app/tsconfig.json
+      # - ./backend/nest-cli.json:/app/nest-cli.json
+      # - /app/node_modules        # Garde node_modules du conteneur
+      # - /app/dist                # ← CRUCIAL : Garde dist du conteneur
+      - ./backend:/app          # Gardez ce volume pour le développement
     depends_on:
-      # postgres:
-      #   condition: service_healthy
       mongodb:
-        condition: service_healthy  
-      # redis:
-      #   condition: service_healthy
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -86,14 +96,13 @@ services:
         limits:
           memory: 1G
         reservations:
-          memory: 512M      
-
+          memory: 512M
 
   # Nginx Reverse Proxy
   nginx:
     # image: ubuntu/nginx:1.18-22.04_beta
     # container_name: app-nginx-ubuntu
-    image: nginx:stable-alpine3.23-perl 
+    image: nginx:stable-alpine3.23-slim 
     container_name: nginx-alpine10
     restart: unless-stopped
     ports:
@@ -161,7 +170,7 @@ services:
 
   # MongoDB - Base de données NoSQL
   mongodb:
-    image: mongo:7
+    image: mongo:8
     container_name: mongo
     restart: unless-stopped
     environment:
@@ -199,7 +208,7 @@ services:
 
   # MongoDB Express - Interface web pour MongoDB
   mongo-express:
-    image: mongo-express:latest
+    image: mongo-express:1.0.2-20-alpine3.19
     container_name: mongo-express10
     restart: unless-stopped
     environment:
@@ -324,6 +333,40 @@ services:
   #       max-size: "10m"
   #       max-file: "3"
 
+# ============================================
+  # MONITORING STACK
+  # ============================================
+  prometheus:
+    image: prom/prometheus:v3.5.4
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.listen-address=0.0.0.0:9090'  # ← Optionnel mais recommandé
+    ports:
+      - "9090:9090"  # ← Utilisez "ports" au lieu de "expose"
+    networks:
+      - app-network  # On utilise votre réseau existant
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3002:3000"    # On utilise le port 3002 pour éviter le conflit avec votre frontend (3000)
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Mot de passe par défaut (à changer)
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+
 networks:
   app-network:
     driver: bridge
@@ -339,6 +382,10 @@ volumes:
     driver: local
   mongodb_config:
     driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local  
   # redis_data:
   #   driver: local
   

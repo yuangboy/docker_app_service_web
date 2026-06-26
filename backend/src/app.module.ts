@@ -5,6 +5,7 @@ import {ConfigModule,ConfigService } from "@nestjs/config";
 import {MongooseModule} from "@nestjs/mongoose";
 import { AuthModule } from './auth/auth.module';
 import { LoggerModule } from './logger/logger.module';
+import {PrometheusModule} from "@willsoto/nestjs-prometheus";
 
 @Module({
   imports: [
@@ -18,7 +19,19 @@ import { LoggerModule } from './logger/logger.module';
      useFactory: (configService: ConfigService) => ({
        uri: configService.get<string>('MONGODB_URI'),
      }),
-   }), AuthModule, LoggerModule
+   }), AuthModule, LoggerModule, 
+   PrometheusModule.register({
+  path: '/metrics',
+  defaultMetrics: {
+    enabled: false,
+  },
+  defaultLabels: {
+    app: 'nestjs-app',
+    environment: 'dev',
+  },
+  global: true,
+})
+
 
   ],
   controllers: [AppController],

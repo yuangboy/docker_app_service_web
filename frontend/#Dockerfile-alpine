@@ -1,0 +1,51 @@
+# ==========================================
+# 1. ÉTAPE DE BUILD (Compilation)
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copie des fichiers de configuration et dépendances
+COPY package*.json ./
+COPY postcss.config.mjs ./
+
+# Installation propre de TOUTES les dépendances (y compris de dev pour le build)
+RUN npm ci
+
+# Copie du reste du code source
+COPY . .
+
+# Allocation de mémoire indispensable pour la compilation de Tailwind v4 / Next.js
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Nettoyage des anciens builds et déclenchement de la compilation (.next)
+RUN rm -rf .next .cache && npm run build
+
+# Nettoyage des dépendances de développement pour alléger l'image finale
+RUN npm prune --production
+
+
+# ==========================================
+# 2. ÉTAPE DE PRODUCTION (Image finale ultra-légère)
+# ==========================================
+# FROM node:20-alpine AS runner
+
+# ENV NODE_ENV=production
+# WORKDIR /app
+
+# Sécurité : Utilisation de l'utilisateur non-root "node" natif d'Alpine
+# RUN chown -R node:node /app
+
+# Copie stricte des fichiers nécessaires au fonctionnement de Next.js en prod
+# COPY --from=builder --chown=node:node /app/.next ./.next
+# COPY --from=builder --chown=node:node /app/public ./public
+# COPY --from=builder --chown=node:node /app/package*.json ./
+# COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+
+# Activation de l'utilisateur sécurisé
+# USER node
+
+# EXPOSE 3000
+
+# Démarrage officiel de Next.js en production (au lieu du mode dev)
+# CMD ["npm", "run", "start"]
