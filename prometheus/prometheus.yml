@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s  # Fréquence à laquelle Prometheus va récolter les données
+
+scrape_configs:
+  # Configuration pour surveiller Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Configuration pour surveiller Node Exporter (sur votre machine hôte)
+  - job_name: 'node_exporter'
+    static_configs:
+      # !!! IMPORTANT !!!
+      # Remplacez 'votre_ip_host' par l'adresse IP de votre machine Ubuntu.
+      # Pour trouver l'IP, utilisez la commande `ip a` ou `hostname -I`.
+      - targets: ['192.168.100.28:9100']
+  - job_name: 'nestjs-backend'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app-backend-service10:3001'] # Nom du conteneur et port interne    

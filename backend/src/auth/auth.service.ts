@@ -7,19 +7,23 @@ import {
   Inject,
   Logger,
 } from '@nestjs/common'
-import { UsersService } from 'src/users/users.service'
+import { UsersService } from '../users/users.service'
 import { JwtService } from '@nestjs/jwt'
 import bcrypt from 'bcrypt'
-import { CreateUserDto } from 'src/users/dto/create.user.dto'
-import { User, UserDocument } from 'src/schemas/User.schema'
+import { CreateUserDto } from '../users/dto/create.user.dto'
+import { User, UserDocument } from '../schemas/User.schema'
 // import { InjectRepository } from '@nestjs/typeorm';
 // import { Repository } from 'typeorm';
-import { JwtPayload } from 'interface/jwt-payload.interface'
+import { JwtPayload } from '../../interface/jwt-payload.interface'
 import { Model } from 'mongoose'
 import { InjectModel } from '@nestjs/mongoose'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
-import { Role } from 'src/common/enums/role.enum'
-import { Permission } from 'src/common/enums/permission.enum'
+import { Role } from '../common/enums/role.enum'
+import { Permission } from '../common/enums/permission.enum'
+// import {makeCounterProvider} from "@willsoto/nestjs-prometheus";
+import { Counter } from 'prom-client'
+import { MetricsService } from '../users/metrics/metrics.service'
+
 
 type typeLogin = Pick<CreateUserDto, 'email' | 'password'>
 type IActivationToken = {
@@ -37,8 +41,12 @@ export class AuthService {
     // private readonly authRepository:Repository<User>,
     private readonly authModel: Model<UserDocument>,
     private readonly userService: UsersService,
-    private readonly jwtService: JwtService
-  ) {}
+    private readonly jwtService: JwtService,
+    // @Inject('user_login_total') private readonly loginCounter: Counter
+    private readonly metricsService: MetricsService
+  ) {
+
+  }
 
   async createUser(data_user: CreateUserDto): Promise<UserDocument> {
     const { email, password } = data_user
@@ -132,6 +140,9 @@ export class AuthService {
         user_by_email.lastLoginAt = new Date()
         await user_by_email.save()
 
+        this.metricsService.incrementLogin('success') // Incrémenter le compteur de login réussi
+        // this.loginCounter.inc({ status: 'success' })
+
         return {
           data: {
             user: {
@@ -144,6 +155,7 @@ export class AuthService {
         }
       } else {
         throw new UnauthorizedException('Mot de passe ou email incorrect')
+        this.metricsService.incrementLogin('failure') // Incrémenter le compteur de login échoué
       }
     } else {
       throw new NotFoundException('User not found !')

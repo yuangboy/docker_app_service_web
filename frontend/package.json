@@ -1,15 +1,15 @@
 {
   "name": "site-colabing",
   "version": "0.1.0",
-  "private": true,m
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint '**/*.{js,ts,jsx,tsx}' --fix",
     "type-check": "tsc --noEmit",
-    "test":"jest --passWithNoTests",
-    "test:ci":"jest --ci --coverage --maxWorkers=4"
+    "test": "jest --passWithNoTests",
+    "test:ci": "jest --ci --coverage --maxWorkers=4"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -47,7 +47,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.3.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

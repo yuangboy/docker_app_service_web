@@ -1,16 +1,16 @@
 import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from 'src/users/dto/create.user.dto';
-import { LoginUserDto } from 'src/users/dto/login.user.dto';
+import { CreateUserDto } from '../users/dto/create.user.dto';
+import { LoginUserDto } from '../users/dto/login.user.dto';
 import { AuthGuard } from './auth.guard';
-import { UserDocument } from 'src/schemas/User.schema';
+import { UserDocument } from '../schemas/User.schema';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Role } from '../common/enums/role.enum';
 import { Permission } from '../common/enums/permission.enum';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 
 @Controller('auth')
 export class AuthController {
